@@ -1,35 +1,42 @@
 import React, { Component } from 'react';
 import { View, Text, ScrollView, FlatList } from 'react-native';
+import { connect } from 'react-redux';
 
 import styles from './styles';
 import PlaylistCardList from '../../Components/PlaylistCardList';
+import { FetchPlaylist } from '../../Redux/Actions/FetchPlaylistAction';
+import Loader from '../../Components/Loader';
 
 class VideoOnDemandScreen extends Component{
-  state = {
-    postList: [],
-    loading: true
-  }
 
-  async componentDidMount(){
-    try {
-      const postApiCall = await fetch('https://newsapi.org/v2/everything?q=bitcoin&from=2019-09-16&sortBy=publishedAt&apiKey=4060bf8630324f66a96bcaa59e51290e');
-      const post = await postApiCall.json();
-      this.setState({ postList: post.articles, loading: false });
-      console.log(post.articles);
-    } catch(err) {
-      console.log("error...",err);
-    }
+  componentDidMount(){
+    this.props.FetchPlaylist();
   }
 
   render() {
-    const { postList, loading } =this.state;
+    const { playlistData, isPlaylistFetching, playlistError, playlistErrorMessage } = this.props;
+
+    if(playlistError){
+      return <View><Text>Error...</Text></View>
+    }
+
+    if(isPlaylistFetching){
+      return <Loader />
+    }
 
     return(
       <ScrollView showsHorizontalScrollIndicator={false} style={styles.mainContainer}>
-        <PlaylistCardList data={postList} />
+        <PlaylistCardList data={playlistData.articles} />
       </ScrollView>
     )
   }
 }
 
-export default VideoOnDemandScreen;
+const mapStateToProps = state =>({
+  playlistData : state.playList.playlistData,
+  isPlaylistFetching: state.playList.isPlaylistFetching,
+  playlistError: state.playList.playlistError,
+  playlistErrorMessage: state.playList.playlistErrorMessage
+});
+
+export default connect(mapStateToProps, {FetchPlaylist})(VideoOnDemandScreen);
